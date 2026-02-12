@@ -201,3 +201,74 @@ uint32_t rot_colors(struct Image *img, int32_t index) {
 
   return make_pixel(b, r, g, a);
 }
+
+// Gets the row-major linear index for a pixel at position (row, col)
+//
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+// @return linear index of target pixel
+int32_t compute_index(struct Image *img, int32_t row, int32_t col) {
+  return row * img->width + col;
+}
+
+// Determines if the position (row, col) is valid for the given Image
+//
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+// @return true if position is valid, false otherwise
+bool valid_position(struct Image *img, int32_t row, int32_t col) {
+  return (row >= 0) && (row < img->height) && (col < img->width) && (col >= 0);
+}
+
+// Initialize a PixelAverager instance. All fields initially set to 0
+//
+// @param pa pointer to PixelAverager instance
+void pa_init(struct PixelAverager *pa) {
+  pa->r = 0;
+  pa->g = 0;
+  pa->b = 0;
+  pa->a = 0;
+  pa->count = 0;
+}
+
+// Update PixelAverager values with values in given pixel
+//
+// @param pa pointer to PixelAverager instance
+// @param pixel color in RGBA format
+void pa_update(struct PixelAverager *pa, uint32_t pixel) {
+  pa->r += get_r(pixel);
+  pa->g += get_g(pixel);
+  pa->b += get_b(pixel);
+  pa->a += get_a(pixel);
+  pa->count++;
+}
+
+// Update PixelAverager with pixel at position (row, col) in given Image
+// Do not update if position is out of bounds
+//
+// @param pa pointer to PixelAverager instance
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+void pa_update_from_img(struct PixelAverager *pa, struct Image *img, int32_t row, int32_t col) {
+  if (valid_position(img, row, col)) {
+    int32_t i = compute_index(img, row, col);
+    pa_update(pa, img->data[i]);
+  }
+}
+
+// Return a pixel that is the average of all pixels used to update PixelAverager
+//
+// @param pa pointer to PixelAverager instance
+// @return pixel whose red, green, blue, and alpha values are the average of
+// all the pixels used to update pa
+uint32_t pa_avg_pixel(struct PixelAverager *pa) {
+  uint32_t r = pa->r / pa->count;
+  uint32_t g = pa->g / pa->count;
+  uint32_t b = pa->b / pa->count;
+  uint32_t a = pa->a / pa->count;
+
+  return make_pixel(r, g, b, a);
+}

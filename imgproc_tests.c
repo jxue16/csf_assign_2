@@ -31,6 +31,7 @@ typedef struct {
 
   // TODO: add additional test fixture data as needed
   uint32_t test_pixel;
+  struct PixelAverager pa;
 } TestObjs;
 
 // Functions to create and clean up a test fixture object
@@ -55,6 +56,12 @@ void test_get_b(TestObjs *objs);
 void test_get_a(TestObjs *objs);
 void test_make_pixel();
 void test_rot_colors(TestObjs *objs);
+void test_compute_index(TestObjs *objs);
+void test_valid_position(TestObjs *objs);
+void test_pa_init(TestObjs *objs);
+void test_pa_update(TestObjs *objs);
+void test_pa_update_from_img(TestObjs *objs);
+void test_pa_avg_pixel(TestObjs *objs);
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -77,6 +84,12 @@ int main( int argc, char **argv ) {
   TEST(test_get_a);
   TEST(test_make_pixel);
   TEST(test_rot_colors);
+  TEST(test_compute_index);
+  TEST(test_valid_position);
+  TEST(test_pa_init);
+  TEST(test_pa_update);
+  TEST(test_pa_update_from_img);
+  TEST(test_pa_avg_pixel);
 
   TEST_FINI();
 }
@@ -100,6 +113,7 @@ TestObjs *setup( void ) {
 
   // Initialize other test data
   objs->test_pixel = 0x8888CCCCU;
+  pa_init(&objs->pa);
 
   return objs;
 }
@@ -237,7 +251,85 @@ void test_rot_colors(TestObjs *objs) {
   ASSERT(rot_color_1 == 0x90ac9dffU);
 
   uint32_t rot_color_2 = rot_colors(&objs->smol, 314);
-  ASSERT(rot_color_2 = 0x253f31ffU);
+  ASSERT(rot_color_2 == 0x253f31ffU);
+}
+
+void test_compute_index(TestObjs *objs) {
+  int32_t index_1 = compute_index(&objs->smol, 10, 11);
+  ASSERT(index_1 == 221);
+
+  int32_t index_2 = compute_index(&objs->smol_squash_3_1, 0, 0);
+  ASSERT(index_2 == 0);
+
+  int32_t index_3 = compute_index(&objs->smol_squash_1_3, 4, 20);
+  ASSERT(index_3 == 104);
+}
+
+void test_valid_position(TestObjs *objs) {
+  ASSERT(valid_position(&objs->smol, 15, 10) == false);
+  ASSERT(valid_position(&objs->smol, 10, 21) == false);
+  ASSERT(valid_position(&objs->smol, 20, 20) == false);
+  ASSERT(valid_position(&objs->smol, 0, 0) == true);
+  ASSERT(valid_position(&objs->smol, 10, 18) == true);
+  ASSERT(valid_position(&objs->smol, -1, 2) == false);
+  ASSERT(valid_position(&objs->smol, 6, -1) == false);
+}
+
+void test_pa_init(TestObjs *objs) {
+  // Initialization function called during object setup
+  // Correct initialization should set all values to 0
+  ASSERT(objs->pa.r == 0);
+  ASSERT(objs->pa.g == 0);
+  ASSERT(objs->pa.b == 0);
+  ASSERT(objs->pa.a == 0);
+  ASSERT(objs->pa.count == 0);
+}
+
+void test_pa_update(TestObjs *objs) {
+  pa_update(&objs->pa, objs->test_pixel);
+
+  // Check that PixelAverager values were updated correctly
+  // test_pixel has value 0x8888CCCC
+  ASSERT(objs->pa.r == 0x88U);
+  ASSERT(objs->pa.g == 0x88U);
+  ASSERT(objs->pa.b == 0xCCU);
+  ASSERT(objs->pa.a == 0xCCU);
+  ASSERT(objs->pa.count == 1);
+}
+
+void test_pa_update_from_img(TestObjs *objs) {
+  // Pixel at this position has value 0x574439ff
+  pa_update_from_img(&objs->pa, &objs->smol_squash_3_1, 5, 5);
+  ASSERT(objs->pa.r == 0x57U);
+  ASSERT(objs->pa.g == 0x44U);
+  ASSERT(objs->pa.b == 0x39U);
+  ASSERT(objs->pa.a == 0xffU);
+  ASSERT(objs->pa.count == 1); 
+
+  // Pixel at this position has value 0x3b2e23ff
+  pa_update_from_img(&objs->pa, &objs->smol_squash_1_3, 4, 20);
+  ASSERT(objs->pa.r == 0x57U + 0x3bU);
+  ASSERT(objs->pa.g == 0x44U + 0x2eU);
+  ASSERT(objs->pa.b == 0x39U + 0x23U);
+  ASSERT(objs->pa.a == 0xffU + 0xffU);
+  ASSERT(objs->pa.count == 2); 
+
+  // Out of bounds position should leave PixelAverager unchanged
+  pa_update_from_img(&objs->pa, &objs->smol, -1, 4);
+  ASSERT(objs->pa.r == 0x57U + 0x3bU);
+  ASSERT(objs->pa.g == 0x44U + 0x2eU);
+  ASSERT(objs->pa.b == 0x39U + 0x23U);
+  ASSERT(objs->pa.a == 0xffU + 0xffU);
+  ASSERT(objs->pa.count == 2); 
+}
+
+void test_pa_avg_pixel(TestObjs *objs) {
+  pa_update(&objs->pa, 0x690E6CFFU);
+  pa_update(&objs->pa, 0x87E61DBFU);
+  pa_update(&objs->pa, 0x24516099U);
+
+  uint32_t avg_pixel = pa_avg_pixel(&objs->pa);
+  ASSERT(avg_pixel == 0x5C6C4DC7U);
 }
 
 // TODO: define additional test functions

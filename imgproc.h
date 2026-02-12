@@ -5,6 +5,13 @@
 #define IMGPROC_H
 
 #include "image.h" // for struct Image and related functions
+#include <stdbool.h>
+
+// PixelAverager struct helps with averaging the color and alpha values
+// of multiple pixels
+struct PixelAverager {
+    uint32_t r, g, b, a, count;
+};
 
 //! Transform the entire image by shrinking it down both 
 //! horizontally and vertically (by potentially different
@@ -167,6 +174,49 @@ uint32_t make_pixel(uint32_t r, uint32_t g, uint32_t b, uint32_t a);
 // @param index row-major linear index of the pixel to be rotated
 // @return color in RGBA format after rotation
 uint32_t rot_colors(struct Image *img, int32_t index);
+
+// Gets the row-major linear index for a pixel at position (row, col)
+//
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+// @return linear index of target pixel
+int32_t compute_index(struct Image *img, int32_t row, int32_t col);
+
+// Determines if the position (row, col) is valid for the given Image
+//
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+// @return true if position is valid, false otherwise
+bool valid_position(struct Image *img, int32_t row, int32_t col);
+
+// Initialize a PixelAverager instance. All fields initially set to 0
+//
+// @param pa pointer to PixelAverager instance
+void pa_init(struct PixelAverager *pa);
+
+// Update PixelAverager values with values in given pixel
+//
+// @param pa pointer to PixelAverager instance
+// @param pixel color in RGBA format
+void pa_update(struct PixelAverager *pa, uint32_t pixel);
+
+// Update PixelAverager with pixel at position (row, col) in given Image
+// Do not update if position is out of bounds
+//
+// @param pa pointer to PixelAverager instance
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+void pa_update_from_img(struct PixelAverager *pa, struct Image *img, int32_t row, int32_t col);
+
+// Return a pixel that is the average of all pixels used to update PixelAverager
+//
+// @param pa pointer to PixelAverager instance
+// @return pixel whose red, green, blue, and alpha values are the average of
+// all the pixels used to update pa
+uint32_t pa_avg_pixel(struct PixelAverager *pa);
 
 // TODO: add prototypes for your helper functions
 
