@@ -152,6 +152,15 @@ uint32_t get_b(uint32_t pixel);
 // @return 8-bit alpha value
 uint32_t get_a(uint32_t pixel);
 
+// Combine individual component values into RGBA color
+//
+// @param r red component value
+// @param g green component value
+// @param b blue component value
+// @param a alpha component value
+// @return pixel color in RGBA format
+uint32_t make_pixel(uint32_t r, uint32_t g, uint32_t b, uint32_t a);
+
 // TODO: add prototypes for your helper functions
 
 #endif // IMGPROC_H

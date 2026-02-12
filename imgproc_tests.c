@@ -53,6 +53,7 @@ void test_get_r(TestObjs *objs);
 void test_get_g(TestObjs *objs);
 void test_get_b(TestObjs *objs);
 void test_get_a(TestObjs *objs);
+void test_make_pixel();
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -73,6 +74,7 @@ int main( int argc, char **argv ) {
   TEST(test_get_g);
   TEST(test_get_b);
   TEST(test_get_a);
+  TEST(test_make_pixel);
 
   TEST_FINI();
 }
@@ -218,6 +220,14 @@ void test_get_b(TestObjs *objs) {
 void test_get_a(TestObjs *objs) {
   uint32_t a = get_a(objs->test_pixel);
   ASSERT(a == 0xCCU);
+}
+
+void test_make_pixel() {
+  uint32_t pixel_1 = make_pixel(0xFFU, 0xCCU, 0xAAU, 0xFFU);
+  ASSERT(pixel_1 == 0xFFCCAAFFU);
+
+  uint32_t pixel_2 = make_pixel(0xFFU, 0x66U, 0x99U, 0x80U);
+  ASSERT(pixel_2 == 0xFF669980U);
 }
 
 // TODO: define additional test functions

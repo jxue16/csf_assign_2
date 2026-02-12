@@ -171,3 +171,15 @@ uint32_t get_a(uint32_t pixel) {
   uint32_t a_mask = 0xFFU;
   return pixel & a_mask;
 }
+
+// Combine individual component values into RGBA color
+//
+// @param r red component value
+// @param g green component value
+// @param b blue component value
+// @param a alpha component value
+// @return pixel color in RGBA format
+uint32_t make_pixel(uint32_t r, uint32_t g, uint32_t b, uint32_t a) {
+  uint32_t pixel = 0x0U | (r << 24) | (g << 16) | (b << 8) | a;
+  return pixel;
+}
