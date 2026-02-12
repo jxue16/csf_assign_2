@@ -128,6 +128,30 @@ void imgproc_blur( struct Image *input_img, struct Image *output_img, int32_t bl
 //!                   transformed pixels should be stored)
 void imgproc_expand( struct Image *input_img, struct Image *output_img);
 
+// Gets the 8 bits corresponding to the red component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit red value
+uint32_t get_r(uint32_t pixel);
+
+// Gets the 8 bits corresponding to the green component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit green value
+uint32_t get_g(uint32_t pixel);
+
+// Gets the 8 bits corresponding to the blue component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit blue value
+uint32_t get_b(uint32_t pixel);
+
+// Gets the 8 bits corresponding to the alpha component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit alpha value
+uint32_t get_a(uint32_t pixel);
+
 // TODO: add prototypes for your helper functions
 
 #endif // IMGPROC_H

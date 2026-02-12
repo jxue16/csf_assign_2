@@ -135,3 +135,39 @@ void imgproc_blur( struct Image *input_img, struct Image *output_img, int32_t bl
 void imgproc_expand( struct Image *input_img, struct Image *output_img) {
   // TODO: implement
 }
+
+// Gets the 8 bits corresponding to the red component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit red value
+uint32_t get_r(uint32_t pixel) {
+  uint32_t r_mask = 0xFFU << 24;
+  return (pixel & r_mask) >> 24;
+}
+
+// Gets the 8 bits corresponding to the green component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit green value
+uint32_t get_g(uint32_t pixel) {
+  uint32_t g_mask = 0xFFU << 16;
+  return (pixel & g_mask) >> 16;
+}
+
+// Gets the 8 bits corresponding to the blue component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit blue value
+uint32_t get_b(uint32_t pixel) {
+  uint32_t b_mask = 0xFFU << 8;
+  return (pixel & b_mask) >> 8;
+}
+
+// Gets the 8 bits corresponding to the alpha component value
+//
+// @param pixel color in RGBA format
+// @return 8-bit alpha value
+uint32_t get_a(uint32_t pixel) {
+  uint32_t a_mask = 0xFFU;
+  return pixel & a_mask;
+}

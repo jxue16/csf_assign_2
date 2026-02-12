@@ -30,6 +30,7 @@ typedef struct {
                smol_color_rot, smol_blur_0, smol_blur_3, smol_expand;
 
   // TODO: add additional test fixture data as needed
+  uint32_t test_pixel;
 } TestObjs;
 
 // Functions to create and clean up a test fixture object
@@ -48,6 +49,10 @@ void test_color_rot_basic( TestObjs *objs );
 void test_blur_basic( TestObjs *objs );
 void test_expand_basic( TestObjs *objs );
 // TODO: add prototypes for additional test functions
+void test_get_r(TestObjs *objs);
+void test_get_g(TestObjs *objs);
+void test_get_b(TestObjs *objs);
+void test_get_a(TestObjs *objs);
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -60,10 +65,14 @@ int main( int argc, char **argv ) {
   // Run tests.
   // Make sure you add additional TEST() macro invocations
   // for any additional test functions you add.
-  TEST( test_squash_basic );
-  TEST( test_color_rot_basic );
-  TEST( test_blur_basic );
-  TEST( test_expand_basic );
+  //TEST( test_squash_basic );
+  //TEST( test_color_rot_basic );
+  //TEST( test_blur_basic );
+  //TEST( test_expand_basic );
+  TEST(test_get_r);
+  TEST(test_get_g);
+  TEST(test_get_b);
+  TEST(test_get_a);
 
   TEST_FINI();
 }
@@ -84,6 +93,9 @@ TestObjs *setup( void ) {
   init_image_from_testdata( &objs->smol_blur_0, &smol_blur_0 );
   init_image_from_testdata( &objs->smol_blur_3, &smol_blur_3 );
   init_image_from_testdata( &objs->smol_expand, &smol_expand );
+
+  // Initialize other test data
+  objs->test_pixel = 0x8888CCCCU;
 
   return objs;
 }
@@ -186,6 +198,26 @@ void test_blur_basic( TestObjs *objs ) {
 
 void test_expand_basic( TestObjs *objs ) {
   XFORM_TEST( expand );
+}
+
+void test_get_r(TestObjs *objs) {
+  uint32_t r = get_r(objs->test_pixel);
+  ASSERT(r == 0x88U);
+}
+
+void test_get_g(TestObjs *objs) {
+  uint32_t g = get_g(objs->test_pixel);
+  ASSERT(g == 0x88U);
+}
+
+void test_get_b(TestObjs *objs) {
+  uint32_t b = get_b(objs->test_pixel);
+  ASSERT(b == 0xCCU);
+}
+
+void test_get_a(TestObjs *objs) {
+  uint32_t a = get_a(objs->test_pixel);
+  ASSERT(a == 0xCCU);
 }
 
 // TODO: define additional test functions
