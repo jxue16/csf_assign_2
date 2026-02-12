@@ -161,6 +161,13 @@ uint32_t get_a(uint32_t pixel);
 // @return pixel color in RGBA format
 uint32_t make_pixel(uint32_t r, uint32_t g, uint32_t b, uint32_t a);
 
+// Rotates the color of the pixel at the given index
+//
+// @param img pointer to Image whose pixel we want to color rotate
+// @param index row-major linear index of the pixel to be rotated
+// @return color in RGBA format after rotation
+uint32_t rot_colors(struct Image *img, int32_t index);
+
 // TODO: add prototypes for your helper functions
 
 #endif // IMGPROC_H

@@ -54,6 +54,7 @@ void test_get_g(TestObjs *objs);
 void test_get_b(TestObjs *objs);
 void test_get_a(TestObjs *objs);
 void test_make_pixel();
+void test_rot_colors(TestObjs *objs);
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -67,7 +68,7 @@ int main( int argc, char **argv ) {
   // Make sure you add additional TEST() macro invocations
   // for any additional test functions you add.
   //TEST( test_squash_basic );
-  //TEST( test_color_rot_basic );
+  TEST( test_color_rot_basic );
   //TEST( test_blur_basic );
   //TEST( test_expand_basic );
   TEST(test_get_r);
@@ -75,6 +76,7 @@ int main( int argc, char **argv ) {
   TEST(test_get_b);
   TEST(test_get_a);
   TEST(test_make_pixel);
+  TEST(test_rot_colors);
 
   TEST_FINI();
 }
@@ -228,6 +230,14 @@ void test_make_pixel() {
 
   uint32_t pixel_2 = make_pixel(0xFFU, 0x66U, 0x99U, 0x80U);
   ASSERT(pixel_2 == 0xFF669980U);
+}
+
+void test_rot_colors(TestObjs *objs) {
+  uint32_t rot_color_1 = rot_colors(&objs->smol, 0);
+  ASSERT(rot_color_1 == 0x90ac9dffU);
+
+  uint32_t rot_color_2 = rot_colors(&objs->smol, 314);
+  ASSERT(rot_color_2 = 0x253f31ffU);
 }
 
 // TODO: define additional test functions

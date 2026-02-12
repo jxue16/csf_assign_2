@@ -59,7 +59,10 @@ void imgproc_squash( struct Image *input_img, struct Image *output_img, int32_t 
 //! @param output_img pointer to the output Image (in which the
 //!                   transformed pixels should be stored)
 void imgproc_color_rot( struct Image *input_img, struct Image *output_img) {
-  // TODO: implement
+  int32_t num_pixels = input_img->width * input_img->height;
+  for (int32_t i = 0; i < num_pixels; i++) {
+    output_img->data[i] = rot_colors(input_img, i);
+  }
 }
 
 //! Transform the input image using a blur effect.
@@ -182,4 +185,19 @@ uint32_t get_a(uint32_t pixel) {
 uint32_t make_pixel(uint32_t r, uint32_t g, uint32_t b, uint32_t a) {
   uint32_t pixel = 0x0U | (r << 24) | (g << 16) | (b << 8) | a;
   return pixel;
+}
+
+// Rotates the color of the pixel at the given index
+//
+// @param img pointer to Image whose pixel we want to color rotate
+// @param index row-major linear index of the pixel to be rotated
+// @return color in RGBA format after rotation
+uint32_t rot_colors(struct Image *img, int32_t index) {
+  uint32_t pixel = img->data[index];
+  uint32_t r = get_r(pixel);
+  uint32_t g = get_g(pixel);
+  uint32_t b = get_b(pixel);
+  uint32_t a = get_a(pixel);
+
+  return make_pixel(b, r, g, a);
 }
