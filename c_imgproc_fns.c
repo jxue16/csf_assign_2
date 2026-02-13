@@ -93,7 +93,13 @@ void imgproc_color_rot( struct Image *input_img, struct Image *output_img) {
 //!                  component averages used to determine the color
 //!                  components of the output pixel
 void imgproc_blur( struct Image *input_img, struct Image *output_img, int32_t blur_dist ) {
-  // TODO: implement
+  // Iterate over all pixels in input image and blur each one
+  for (int32_t r = 0; r < input_img->height; r++) {
+    for (int32_t c = 0; c < input_img->width; c++) {
+      int32_t index = compute_index(input_img, r, c);
+      output_img->data[index] = blur_pixel(input_img, r, c, blur_dist);
+    }
+  }
 }
 
 //! The `expand` transformation doubles the width and height of the image.
@@ -270,5 +276,33 @@ uint32_t pa_avg_pixel(struct PixelAverager *pa) {
   uint32_t b = pa->b / pa->count;
   uint32_t a = pa->a / pa->count;
 
+  return make_pixel(r, g, b, a);
+}
+
+// Blur the pixel at the given position
+//
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+// @param blur_dist how many pixels around target pixel should be considered in blurring
+uint32_t blur_pixel(struct Image *img, int32_t row, int32_t col, int32_t blur_dist) {
+  // Initialize PixelAverager instance to help with averaging pixel values
+  struct PixelAverager pa;
+  pa_init(&pa);
+
+  // Update PixelAverager with all pixels within blur distance
+  for (int32_t r = row - blur_dist; r <= row + blur_dist; r++) {
+    for (int32_t c = col - blur_dist; c <= col + blur_dist; c++) {
+      pa_update_from_img(&pa, img, r, c);
+    }
+  }
+
+  // Compute blurred pixel values
+  uint32_t pixel = pa_avg_pixel(&pa);
+  uint32_t r = get_r(pixel);
+  uint32_t g = get_g(pixel);
+  uint32_t b = get_b(pixel);
+  // Alpha value should not be averaged, so get alpha value of target pixel
+  uint32_t a = get_a(img->data[compute_index(img, row, col)]);
   return make_pixel(r, g, b, a);
 }

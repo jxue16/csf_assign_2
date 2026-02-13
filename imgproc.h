@@ -218,6 +218,14 @@ void pa_update_from_img(struct PixelAverager *pa, struct Image *img, int32_t row
 // all the pixels used to update pa
 uint32_t pa_avg_pixel(struct PixelAverager *pa);
 
+// Blur the pixel at the given position
+//
+// @param img pointer to Image
+// @param row row of target pixel (starting with row 0 as top row)
+// @param col column of target pixel (starting with column 0 as leftmost column)
+// @param blur_dist how many pixels around target pixel should be considered in blurring
+uint32_t blur_pixel(struct Image *img, int32_t row, int32_t col, int32_t blur_dist);
+
 // TODO: add prototypes for your helper functions
 
 #endif // IMGPROC_H

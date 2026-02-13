@@ -76,7 +76,7 @@ int main( int argc, char **argv ) {
   // for any additional test functions you add.
   //TEST( test_squash_basic );
   TEST( test_color_rot_basic );
-  //TEST( test_blur_basic );
+  TEST( test_blur_basic );
   //TEST( test_expand_basic );
   TEST(test_get_r);
   TEST(test_get_g);
@@ -330,6 +330,10 @@ void test_pa_avg_pixel(TestObjs *objs) {
 
   uint32_t avg_pixel = pa_avg_pixel(&objs->pa);
   ASSERT(avg_pixel == 0x5C6C4DC7U);
+}
+
+void test_blur_pixel(TestObjs *objs) {
+  //
 }
 
 // TODO: define additional test functions
