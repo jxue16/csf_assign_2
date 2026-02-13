@@ -42,7 +42,17 @@
 //! @param xfac factor to downsize the image horizontally; guaranteed to be positive
 //! @param yfac factor to downsize the image vertically; guaranteed to be positive
 void imgproc_squash( struct Image *input_img, struct Image *output_img, int32_t xfac, int32_t yfac ) {
-  // TODO: implement
+  // Make output image dimensions as factored
+  output_img->height = input_img->height / yfac;
+  output_img->width  = input_img->width / xfac;
+
+  // Iterate over all pixels in output image and calculate expanded from input image
+  for (int32_t i = 0; i < output_img->height; i++) {
+    for (int32_t j = 0; j < output_img->width; j++) {
+      int32_t index = compute_index(output_img, i, j);
+      output_img->data[index] = squash_pixel(input_img, i, j, xfac, yfac);
+    }
+  }
 }
 
 //! Transform the color component values in each input pixel
@@ -356,4 +366,23 @@ uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j) {
   }
 
   return pa_avg_pixel(&pa);
+}
+
+
+// Compute squashed pixel at output position (i, j)
+//
+// @param img pointer to input Image
+// @param i row in output image
+// @param j column in output image
+// @param xfac xfactor of squash
+// @param yfac yfactor of squash
+// @return squashed pixel value
+uint32_t squash_pixel(struct Image *img, int32_t i, int32_t j, int32_t xfac, int32_t yfac) {
+  // Retrieve input image baseline
+  int32_t base_r = i * xfac;
+  int32_t base_c = j * yfac;
+
+  // Compute squashed pixel
+  int32_t index = compute_index(img, base_r, base_c);
+  return img->data[index];
 }
