@@ -142,7 +142,17 @@ void imgproc_blur( struct Image *input_img, struct Image *output_img, int32_t bl
 //! @param output_img pointer to the output Image (in which the
 //!                   transformed pixels should be stored)
 void imgproc_expand( struct Image *input_img, struct Image *output_img) {
-  // TODO: implement
+  // Make output image dimensions twice as large
+  output_img->height = 2 * input_img->height;
+  output_img->width  = 2 * input_img->width;
+
+  // Iterate over all pixels in output image and calculate expanded from input image
+  for (int32_t i = 0; i < output_img->height; i++) {
+    for (int32_t j = 0; j < output_img->width; j++) {
+      int32_t index = compute_index(output_img, i, j);
+      output_img->data[index] = expand_pixel(input_img, i, j);
+    }
+  }
 }
 
 // Gets the 8 bits corresponding to the red component value
@@ -305,4 +315,45 @@ uint32_t blur_pixel(struct Image *img, int32_t row, int32_t col, int32_t blur_di
   // Alpha value should not be averaged, so get alpha value of target pixel
   uint32_t a = get_a(img->data[compute_index(img, row, col)]);
   return make_pixel(r, g, b, a);
+}
+
+// Compute expanded pixel at output position (i, j)
+//
+// @param img pointer to input Image
+// @param i row in output image
+// @param j column in output image
+// @return expanded pixel value
+uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j) {
+  // Retrieve input image baseline
+  int32_t base_r = i / 2;
+  int32_t base_c = j / 2;
+
+  // Case where both i and j are even
+  if ((i % 2 == 0) && (j % 2 == 0)) {
+    int32_t index = compute_index(img, base_r, base_c);
+    return img->data[index];
+  }
+
+  struct PixelAverager pa;
+  pa_init(&pa);
+
+  // Top left
+  pa_update_from_img(&pa, img, base_r, base_c);
+
+  // Top right
+  if (j % 2 == 1) {
+    pa_update_from_img(&pa, img, base_r, base_c + 1);
+  }
+
+  // Bottom left
+  if (i % 2 == 1) {
+    pa_update_from_img(&pa, img, base_r + 1, base_c);
+  }
+
+  // Bottom right
+  if ((i % 2 == 1) && (j % 2 == 1)) {
+    pa_update_from_img(&pa, img, base_r + 1, base_c + 1);
+  }
+
+  return pa_avg_pixel(&pa);
 }
