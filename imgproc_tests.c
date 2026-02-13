@@ -62,6 +62,7 @@ void test_pa_init(TestObjs *objs);
 void test_pa_update(TestObjs *objs);
 void test_pa_update_from_img(TestObjs *objs);
 void test_pa_avg_pixel(TestObjs *objs);
+void test_blur_pixel(TestObjs *objs);
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -74,10 +75,10 @@ int main( int argc, char **argv ) {
   // Run tests.
   // Make sure you add additional TEST() macro invocations
   // for any additional test functions you add.
-  //TEST( test_squash_basic );
+  TEST( test_squash_basic );
   TEST( test_color_rot_basic );
   TEST( test_blur_basic );
-  //TEST( test_expand_basic );
+  TEST( test_expand_basic );
   TEST(test_get_r);
   TEST(test_get_g);
   TEST(test_get_b);
@@ -90,6 +91,7 @@ int main( int argc, char **argv ) {
   TEST(test_pa_update);
   TEST(test_pa_update_from_img);
   TEST(test_pa_avg_pixel);
+  TEST(test_blur_pixel);
 
   TEST_FINI();
 }
@@ -333,7 +335,17 @@ void test_pa_avg_pixel(TestObjs *objs) {
 }
 
 void test_blur_pixel(TestObjs *objs) {
-  //
+  // Blur distance of 0 should leave pixel unchanged
+  uint32_t blurred_1 = blur_pixel(&objs->smol, 10, 10, 0);
+  ASSERT(blurred_1 == objs->smol.data[220]);
+
+  // Pixel at very edge of image
+  uint32_t blurred_2 = blur_pixel(&objs->smol, 0, 20, 3);
+  ASSERT(blurred_2 == objs->smol_blur_3.data[20]);
+
+  // Pixel in middle of image
+  uint32_t blurred_3 = blur_pixel(&objs->smol, 5, 5, 3);
+  ASSERT(blurred_3 == objs->smol_blur_3.data[110]);
 }
 
 // TODO: define additional test functions

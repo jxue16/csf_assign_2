@@ -226,6 +226,24 @@ uint32_t pa_avg_pixel(struct PixelAverager *pa);
 // @param blur_dist how many pixels around target pixel should be considered in blurring
 uint32_t blur_pixel(struct Image *img, int32_t row, int32_t col, int32_t blur_dist);
 
+// Compute expanded pixel at output position (i, j)
+//
+// @param img pointer to input Image
+// @param i row in output image
+// @param j column in output image
+// @return expanded pixel value
+uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j);
+
+// Compute squashed pixel at output position (i, j)
+//
+// @param img pointer to input Image
+// @param i row in output image
+// @param j column in output image
+// @param xfac xfactor of squash
+// @param yfac yfactor of squash
+// @return squashed pixel value
+uint32_t squash_pixel(struct Image *img, int32_t i, int32_t j, int32_t xfac, int32_t yfac);
+
 // TODO: add prototypes for your helper functions
 
 #endif // IMGPROC_H
