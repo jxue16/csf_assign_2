@@ -1,3 +1,10 @@
+/*
+ * Unit tests for image processing functions and helper functions
+ * CSF Assignment 2
+ * Partner 1: Flora Huang (fhuang27@jh.edu)
+ * Partner 2: Jonathan Xue (jxue18@jh.edu)
+ */
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -29,7 +36,6 @@ typedef struct {
   struct Image smol, smol_squash_1_1, smol_squash_3_1, smol_squash_1_3,
                smol_color_rot, smol_blur_0, smol_blur_3, smol_expand;
 
-  // TODO: add additional test fixture data as needed
   uint32_t test_pixel;
   struct PixelAverager pa;
 } TestObjs;
@@ -49,7 +55,6 @@ void test_squash_basic( TestObjs *objs );
 void test_color_rot_basic( TestObjs *objs );
 void test_blur_basic( TestObjs *objs );
 void test_expand_basic( TestObjs *objs );
-// TODO: add prototypes for additional test functions
 void test_get_r(TestObjs *objs);
 void test_get_g(TestObjs *objs);
 void test_get_b(TestObjs *objs);
@@ -64,6 +69,7 @@ void test_pa_update_from_img(TestObjs *objs);
 void test_pa_avg_pixel(TestObjs *objs);
 void test_blur_pixel(TestObjs *objs);
 void test_squash_pixel(TestObjs *objs);
+void test_expand_pixel(TestObjs *objs);
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -94,6 +100,7 @@ int main( int argc, char **argv ) {
   TEST(test_pa_avg_pixel);
   TEST(test_blur_pixel);
   TEST(test_squash_pixel);
+  TEST(test_expand_pixel);
 
   TEST_FINI();
 }
@@ -125,9 +132,6 @@ TestObjs *setup( void ) {
 void cleanup( TestObjs *objs ) {
   // Note that the test Images don't need to be cleaned
   // up, because their data isn't dynamically allocated
-
-  // TODO: clean up any test fixture data
-
   free( objs );
 }
 

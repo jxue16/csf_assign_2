@@ -1,5 +1,10 @@
-// Header for image processing API functions (imgproc_complement, etc.)
-// as well as any helper functions they rely on.
+/*
+ * Header for image processing API functions (imgproc_complement, etc.)
+ * as well as any helper functions they rely on.
+ * CSF Assignment 2
+ * Partner 1: Flora Huang (fhuang27@jh.edu)
+ * Partner 2: Jonathan Xue (jxue18@jh.edu)
+ */
 
 #ifndef IMGPROC_H
 #define IMGPROC_H
@@ -243,7 +248,5 @@ uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j);
 // @param yfac yfactor of squash
 // @return squashed pixel value
 uint32_t squash_pixel(struct Image *img, int32_t i, int32_t j, int32_t xfac, int32_t yfac);
-
-// TODO: add prototypes for your helper functions
 
 #endif // IMGPROC_H

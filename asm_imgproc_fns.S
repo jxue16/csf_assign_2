@@ -1,5 +1,8 @@
 /*
  * x86-64 assembly language implementations of functions
+ * CSF Assignment 2
+ * Partner 1: Flora Huang (fhuang27@jh.edu)
+ * Partner 2: Jonathan Xue (jxue18@jh.edu)
  */
 
 	.section .text
@@ -159,6 +162,81 @@ imgproc_blur:
  */
 	.globl imgproc_expand
 imgproc_expand:
+	/* TODO: implement */
+	ret
+
+	.globl get_r
+get_r:
+	/* TODO: implement */
+	ret
+
+	.globl get_g
+get_g:
+	/* TODO: implement */
+	ret
+
+	.globl get_b
+get_b:
+	/* TODO: implement */
+	ret
+
+	.globl get_a
+get_a:
+	/* TODO: implement */
+	ret
+
+	.globl make_pixel
+make_pixel:
+	/* TODO: implement */
+	ret
+
+	.globl rot_colors
+rot_colors:
+	/* TODO: implement */
+	ret
+
+	.globl compute_index
+compute_index:
+	/* TODO: implement */
+	ret
+
+	.globl valid_position
+valid_position:
+	/* TODO: implement */
+	ret
+
+	.globl pa_init
+pa_init:
+	/* TODO: implement */
+	ret
+
+	.globl pa_update
+pa_update:
+	/* TODO: implement */
+	ret
+
+	.globl pa_update_from_img
+pa_update_from_img:
+	/* TODO: implement */
+	ret
+
+	.globl pa_avg_pixel
+pa_avg_pixel:
+	/* TODO: implement */
+	ret
+
+	.globl blur_pixel
+blur_pixel:
+	/* TODO: implement */
+	ret
+
+	.globl expand_pixel
+expand_pixel:
+	/* TODO: implement */
+	ret
+
+	.globl squash_pixel
+squash_pixel:
 	/* TODO: implement */
 	ret
 

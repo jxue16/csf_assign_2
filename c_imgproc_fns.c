@@ -1,10 +1,13 @@
-// C implementations of image processing functions
+/*
+ * C implementations of image processing functions
+ * CSF Assignment 2
+ * Partner 1: Flora Huang (fhuang27@jh.edu)
+ * Partner 2: Jonathan Xue (jxue18@jh.edu)
+ */
 
 #include <stdlib.h>
 #include <assert.h>
 #include "imgproc.h"
-
-// TODO: define your helper functions here
 
 //! Transform the entire image by shrinking it down both 
 //! horizontally and vertically (by potentially different
