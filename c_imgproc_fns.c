@@ -379,8 +379,8 @@ uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j) {
 // @return squashed pixel value
 uint32_t squash_pixel(struct Image *img, int32_t i, int32_t j, int32_t xfac, int32_t yfac) {
   // Retrieve input image baseline
-  int32_t base_r = i * xfac;
-  int32_t base_c = j * yfac;
+  int32_t base_r = i * yfac;
+  int32_t base_c = j * xfac;
 
   // Compute squashed pixel
   int32_t index = compute_index(img, base_r, base_c);

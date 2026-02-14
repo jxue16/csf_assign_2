@@ -63,6 +63,7 @@ void test_pa_update(TestObjs *objs);
 void test_pa_update_from_img(TestObjs *objs);
 void test_pa_avg_pixel(TestObjs *objs);
 void test_blur_pixel(TestObjs *objs);
+void test_squash_pixel(TestObjs *objs);
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the
@@ -92,6 +93,7 @@ int main( int argc, char **argv ) {
   TEST(test_pa_update_from_img);
   TEST(test_pa_avg_pixel);
   TEST(test_blur_pixel);
+  TEST(test_squash_pixel);
 
   TEST_FINI();
 }
@@ -348,4 +350,37 @@ void test_blur_pixel(TestObjs *objs) {
   ASSERT(blurred_3 == objs->smol_blur_3.data[110]);
 }
 
-// TODO: define additional test functions
+void test_squash_pixel(TestObjs *objs) {
+  int32_t xfac = 3;
+  int32_t yfac = 1;
+
+  int32_t out_r = 2;
+  int32_t out_c = 4;
+
+  int32_t in_r = out_r * yfac;
+  int32_t in_c = out_c * xfac;
+
+  uint32_t squashed = squash_pixel(&objs->smol, out_r, out_c, xfac, yfac);
+
+  ASSERT(squashed == objs->smol.data[compute_index(&objs->smol, in_r, in_c)]);
+}
+
+void test_expand_pixel(TestObjs *objs) {
+  int32_t i = 3;
+  int32_t j = 5;
+
+  int32_t base_r = i / 2;
+  int32_t base_c = j / 2;
+
+  struct PixelAverager pa;
+  pa_init(&pa);
+
+  pa_update_from_img(&pa, &objs->smol, base_r, base_c);
+  pa_update_from_img(&pa, &objs->smol, base_r, base_c + 1);
+  pa_update_from_img(&pa, &objs->smol, base_r + 1, base_c);
+  pa_update_from_img(&pa, &objs->smol, base_r + 1, base_c + 1);
+
+  uint32_t expanded = expand_pixel(&objs->smol, i, j);
+
+  ASSERT(expanded == pa_avg_pixel(&pa));
+}
