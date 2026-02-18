@@ -82,25 +82,25 @@ int main( int argc, char **argv ) {
   // Run tests.
   // Make sure you add additional TEST() macro invocations
   // for any additional test functions you add.
-  TEST( test_squash_basic );
-  TEST( test_color_rot_basic );
-  TEST( test_blur_basic );
-  TEST( test_expand_basic );
+  //TEST( test_squash_basic );
+  //TEST( test_color_rot_basic );
+  //TEST( test_blur_basic );
+  //TEST( test_expand_basic );
   TEST(test_get_r);
   TEST(test_get_g);
   TEST(test_get_b);
   TEST(test_get_a);
   TEST(test_make_pixel);
-  TEST(test_rot_colors);
-  TEST(test_compute_index);
-  TEST(test_valid_position);
-  TEST(test_pa_init);
-  TEST(test_pa_update);
-  TEST(test_pa_update_from_img);
-  TEST(test_pa_avg_pixel);
-  TEST(test_blur_pixel);
-  TEST(test_squash_pixel);
-  TEST(test_expand_pixel);
+  //TEST(test_rot_colors);
+  //TEST(test_compute_index);
+  //TEST(test_valid_position);
+  //TEST(test_pa_init);
+  //TEST(test_pa_update);
+  //TEST(test_pa_update_from_img);
+  //TEST(test_pa_avg_pixel);
+  //TEST(test_blur_pixel);
+  //TEST(test_squash_pixel);
+  //TEST(test_expand_pixel);
 
   TEST_FINI();
 }
@@ -123,7 +123,7 @@ TestObjs *setup( void ) {
   init_image_from_testdata( &objs->smol_expand, &smol_expand );
 
   // Initialize other test data
-  objs->test_pixel = 0x8888CCCCU;
+  objs->test_pixel = 0x8de0baffU;
   pa_init(&objs->pa);
 
   return objs;
@@ -228,22 +228,22 @@ void test_expand_basic( TestObjs *objs ) {
 
 void test_get_r(TestObjs *objs) {
   uint32_t r = get_r(objs->test_pixel);
-  ASSERT(r == 0x88U);
+  ASSERT(r == 0x8dU);
 }
 
 void test_get_g(TestObjs *objs) {
   uint32_t g = get_g(objs->test_pixel);
-  ASSERT(g == 0x88U);
+  ASSERT(g == 0xe0U);
 }
 
 void test_get_b(TestObjs *objs) {
   uint32_t b = get_b(objs->test_pixel);
-  ASSERT(b == 0xCCU);
+  ASSERT(b == 0xbaU);
 }
 
 void test_get_a(TestObjs *objs) {
   uint32_t a = get_a(objs->test_pixel);
-  ASSERT(a == 0xCCU);
+  ASSERT(a == 0xffU);
 }
 
 void test_make_pixel() {

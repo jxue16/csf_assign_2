@@ -165,29 +165,104 @@ imgproc_expand:
 	/* TODO: implement */
 	ret
 
+/*
+ * Gets the 8 bits corresponding to the red component value
+ *
+ * Parameters:
+ *   %edi - pixel color in RGBA format
+ *
+ * Returns:
+ *    8 bits corresponding to red value
+ */
 	.globl get_r
 get_r:
-	/* TODO: implement */
+	subq $8, %rsp		/* align stack pointer */
+	movl $0xFFU, %eax   /* set %eax to 0xFFU (11111111) */
+	shll $24, %eax      /* left shift 24 times to get mask for red bits */
+	andl %edi, %eax     /* get value of red bits with bitwise and mask */
+	shrl $24, %eax      /* right shift by 24 to isolate 8-bit red value */
+	addq $8, %rsp       /* restore stack pointer */
 	ret
 
+/*
+ * Gets the 8 bits corresponding to the green component value
+ *
+ * Parameters:
+ *   %edi - pixel color in RGBA format
+ *
+ * Returns:
+ *    8 bits corresponding to green value
+ */
 	.globl get_g
 get_g:
-	/* TODO: implement */
+	subq $8, %rsp		/* align stack pointer */
+	movl $0xFFU, %eax   /* set %eax to 0xFFU (11111111) */
+	shll $16, %eax      /* left shift 16 times to get mask for green bits */
+	andl %edi, %eax     /* get value of green bits with bitwise and mask */
+	shrl $16, %eax      /* right shift by 16 to isolate 8-bit green value */
+	addq $8, %rsp       /* restore stack pointer */
 	ret
 
+/*
+ * Gets the 8 bits corresponding to the blue component value
+ *
+ * Parameters:
+ *   %edi - pixel color in RGBA format
+ *
+ * Returns:
+ *    8 bits corresponding to blue value
+ */
 	.globl get_b
 get_b:
-	/* TODO: implement */
+	subq $8, %rsp		/* align stack pointer */
+	movl $0xFFU, %eax   /* set %eax to 0xFFU (11111111) */
+	shll $8, %eax       /* left shift 8 times to get mask for blue bits */
+	andl %edi, %eax     /* get value of blue bits with bitwise and mask */
+	shrl $8, %eax       /* right shift by 8 to isolate 8-bit blue value */
+	addq $8, %rsp       /* restore stack pointer */
 	ret
 
+/*
+ * Gets the 8 bits corresponding to the alpha component value
+ *
+ * Parameters:
+ *   %edi - pixel color in RGBA format
+ *
+ * Returns:
+ *    8 bits corresponding to alpha value
+ */
 	.globl get_a
 get_a:
-	/* TODO: implement */
+	subq $8, %rsp		/* align stack pointer */
+	movl $0xFFU, %eax   /* set %eax to 0xFFU (11111111) */
+	andl %edi, %eax     /* get value of alpha bits with bitwise and mask */
+	addq $8, %rsp       /* restore stack pointer */
 	ret
 
+/*
+ * Combine individual component values into RGBA color
+ *
+ * Parameters:
+ *   %edi - red component bits
+ *	 %esi - green component bits
+ *	 %edx - blue component bits
+ *	 %ecx - alpha component bits 
+ *
+ * Returns:
+ *    pixel color in RGBA format
+ */
 	.globl make_pixel
 make_pixel:
-	/* TODO: implement */
+	subq $8, %rsp   /* align stack pointer */
+	shll $24, %edi	/* left shift red value by 24 */
+	shll $16, %esi  /* left shift green value by 16 */
+	shll $8, %edx   /* left shift blue value by 8 */
+	movl $0, %eax   /* initialize RGBA color as 0 */
+	orl %edi, %eax  /* add red bits */
+	orl %esi, %eax  /* add green bits */
+	orl %edx, %eax  /* add blue bits */
+	orl %ecx, %eax  /* add alpha bits */
+	addq $8, %rsp   /* restore stack pointer */
 	ret
 
 	.globl rot_colors
