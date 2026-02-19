@@ -265,9 +265,72 @@ make_pixel:
 	addq $8, %rsp   /* restore stack pointer */
 	ret
 
+/*
+ * Rotates the color of the pixel at the given index
+ *
+ * Parameters:
+ *   %rdi - pointer to Img struct
+ *	 %rsi - index of pixel we want to rotate
+ *
+ * Returns:
+ *    rotated pixel color in RGBA format
+ */
 	.globl rot_colors
 rot_colors:
-	/* TODO: implement */
+	/*
+	 * Register use:
+	 *   %r12d - RGBA value of pixel at given index
+	 *   %r13d - red value of given pixel
+	 *   %r14d - green value of given pixel
+	 *   %r15d - blue value of given pixel
+	 *   %ebx - alpha value of given pixel
+	 */
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $40, %rsp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	movq IMAGE_DATA_OFFSET(%rdi), %r10  /* get address of data array */
+	movl (%r10, %rsi, 4), %r12d         /* get color of pixel at specified index */
+
+	movl %r12d, %edi  /* pass pixel color to argument register */
+	call get_r        /* get r value */
+	movl %eax, %r13d  /* save r value in %r13d */
+
+	movl %r12d, %edi  /* pass pixel color to argument register */  
+	call get_g        /* get g value */
+	movl %eax, %r14d  /* save g value in %r14d */
+
+	movl %r12d, %edi  /* pass pixel color to argument register */
+	call get_b        /* get b value */
+	movl %eax, %r15d  /* save b value in %r15d */
+
+	movl %r12d, %edi  /* pass pixel color to argument register */ 
+	call get_a        /* get a value */
+	movl %eax, %ebx   /* save a value in %ebx */
+
+	movl %r15d, %edi  /* b as first argument */
+	movl %r13d, %esi  /* r as second argument */
+	movl %r14d, %edx  /* g as third argument */
+	movl %ebx, %ecx   /* a as fourth argument */
+	call make_pixel   /* call function to create pixel */
+
+	/* restore values of callee-saved registers */
+	popq %r12
+	popq %r13
+	popq %r14
+	popq %r15
+	popq %rbx
+	/* restore stack */
+	addq $40, %rsp
+	popq %rbp
 	ret
 
 	.globl compute_index

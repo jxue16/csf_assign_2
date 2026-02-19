@@ -91,7 +91,7 @@ int main( int argc, char **argv ) {
   TEST(test_get_b);
   TEST(test_get_a);
   TEST(test_make_pixel);
-  //TEST(test_rot_colors);
+  TEST(test_rot_colors);
   //TEST(test_compute_index);
   //TEST(test_valid_position);
   //TEST(test_pa_init);
@@ -297,11 +297,11 @@ void test_pa_update(TestObjs *objs) {
   pa_update(&objs->pa, objs->test_pixel);
 
   // Check that PixelAverager values were updated correctly
-  // test_pixel has value 0x8888CCCC
-  ASSERT(objs->pa.r == 0x88U);
-  ASSERT(objs->pa.g == 0x88U);
-  ASSERT(objs->pa.b == 0xCCU);
-  ASSERT(objs->pa.a == 0xCCU);
+  // test_pixel has value 0x8de0baffU
+  ASSERT(objs->pa.r == 0x8dU);
+  ASSERT(objs->pa.g == 0xe0U);
+  ASSERT(objs->pa.b == 0xbaU);
+  ASSERT(objs->pa.a == 0xffU);
   ASSERT(objs->pa.count == 1);
 }
 
