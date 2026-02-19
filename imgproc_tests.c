@@ -82,8 +82,8 @@ int main( int argc, char **argv ) {
   // Run tests.
   // Make sure you add additional TEST() macro invocations
   // for any additional test functions you add.
-  //TEST( test_squash_basic );
-  //TEST( test_color_rot_basic );
+  TEST( test_squash_basic );
+  TEST( test_color_rot_basic );
   //TEST( test_blur_basic );
   //TEST( test_expand_basic );
   TEST(test_get_r);
@@ -92,14 +92,14 @@ int main( int argc, char **argv ) {
   TEST(test_get_a);
   TEST(test_make_pixel);
   TEST(test_rot_colors);
-  //TEST(test_compute_index);
+  TEST(test_compute_index);
   //TEST(test_valid_position);
   //TEST(test_pa_init);
   //TEST(test_pa_update);
   //TEST(test_pa_update_from_img);
   //TEST(test_pa_avg_pixel);
   //TEST(test_blur_pixel);
-  //TEST(test_squash_pixel);
+  TEST(test_squash_pixel);
   //TEST(test_expand_pixel);
 
   TEST_FINI();

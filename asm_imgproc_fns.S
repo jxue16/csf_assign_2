@@ -75,15 +75,64 @@ imgproc_squash:
  *  For instance, if a pixel had the hex value 0xAABBCCDD, the 
  *  transformed pixel would become 0xCCAABBDD
  * 
- *  @param input_img pointer to the input Image
- *  @param output_img pointer to the output Image (in which the
+ *  @param %rdi pointer to the input Image
+ *  @param %rsi pointer to the output Image (in which the
  *                    transformed pixels should be stored)
  */
 	.globl imgproc_color_rot
 imgproc_color_rot:
-	/* TODO: implement */
-	ret
+	/*
+	* Register use:
+	*   %r12d - total pixels in Image
+	*   %r13d - index counter for looping
+	*   %r14 - pointer to input Image
+	*   %r15 - pointer to output Image
+	*   %rbx - pointer to data array of output Image struct
+	*/
 
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $40, %rsp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r8d     /* width of image */
+	movl IMAGE_HEIGHT_OFFSET(%rdi), %r12d   /* height of image */
+	imull %r8d, %r12d                       /* total pixels in image */
+
+	movl $0, %r13d		                /* set index counter to 0 */
+	movq %rdi, %r14                     /* save input img pointer in %r14 */
+	movq %rsi, %r15                     /* save output img pointer in %r15 */
+	movq IMAGE_DATA_OFFSET(%r15), %rbx  /* pointer to data array of output Image struct */
+	
+	.Ltop_color_rot:
+		cmpl %r12d, %r13d
+		jge .Ldone_color_rot  /* end loop if index >= no. of pixels */
+
+		movq %r14, %rdi            /* set 1st argument register as pointer to input img */
+		movl %r13d, %esi           /* set 2nd argument register as current index */
+		call rot_colors            /* rotate pixel at current index */
+		movl %eax, (%rbx, %r13, 4) /* save current rotated pixel in data array */
+		
+		incl %r13d           /* increment index */
+		jmp .Ltop_color_rot  /* return to top of loop */
+
+	.Ldone_color_rot:
+		/* restore values of callee-saved registers */
+		popq %rbx
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		/* restore stack */
+		addq $40, %rsp
+		popq %rbp
+		ret
 
 /*
  *  Transform the input image using a blur effect.
@@ -323,11 +372,11 @@ rot_colors:
 	call make_pixel   /* call function to create pixel */
 
 	/* restore values of callee-saved registers */
-	popq %r12
-	popq %r13
-	popq %r14
-	popq %r15
 	popq %rbx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
 	/* restore stack */
 	addq $40, %rsp
 	popq %rbp
