@@ -61,7 +61,74 @@
  */
 	.globl imgproc_squash
 imgproc_squash:
-	/* TODO: implement */
+	/*
+	* Register use:
+	*   %r12d - total output pixels
+	*   %r13d - index counter
+	*   %r14  - input image pointer
+	*   %r15  - output image pointer
+	*   %rbx  - pointer to output data array
+	*   %r10d - xfactor
+	*   %r11d - yfactor
+	*/
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $40, %rsp
+	/* save callee-saved registers */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	movq %rdi, %r14        /* save input image in r14 */
+	movq %rsi, %r15        /* save output image in r15 */
+	movl %edx, %r10d       /* save xfactor in r10d */
+	movl %ecx, %r11d       /* save yfactor in r11d */
+
+	movl IMAGE_WIDTH_OFFSET(%r14), %eax	/* input width of image */
+	cltd								/* prepare width for division */
+	idivl %r10d							/* divide width by xfactor */
+	movl %eax, %r8d      			  	/* save output width in r8d */
+
+	movl IMAGE_HEIGHT_OFFSET(%r14), %eax	/* input height of image */
+	cltd									/* prepare height for division */
+	idivl %r11d								/* divide height by yfactor */
+	movl %eax, %r9d       				 	/* save output height in r9d */
+
+	movl %r8d, %r12d	/* store output width in r12d */
+	imull %r9d, %r12d	/* multiply output width by output height to get total output pixels in r12d */
+
+	movl $0, %r13d         /* set loop index to 0 */
+	movq IMAGE_DATA_OFFSET(%r15), %rbx  /* output data pointer */
+
+.Ltop_squash:
+	cmpl %r12d, %r13d
+	jge .Ldone_squash		/* end loop if index >= no. of pixels */
+
+	movq %r14, %rdi			/* set 1st argument register as pointer to input */
+	movl %r13d, %esi		/* set 2nd argument register as current index */
+	movl %r10d, %edx		/* set 3rd argument register as xfactor */
+	movl %r11d, %ecx		/* set 4th argument register as yfactor */
+	call squash_pixel		/* find original pixel from output */
+
+	movl %eax, (%rbx, %r13, 4)	/* save current pixel */
+
+	incl %r13d			/* increment index */
+	jmp .Ltop_squash	/* return to top of loop */
+
+.Ldone_squash:
+	/* restore values of callee-saved registers */
+	popq %rbx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	/* restore stack */
+	addq $40, %rsp
+	popq %rbp
 	ret
 
 /*
@@ -424,7 +491,65 @@ expand_pixel:
 
 	.globl squash_pixel
 squash_pixel:
-	/* TODO: implement */
+	/*
+	 * Register use:
+	 *   %r12d - input width
+	 *   %r13d - output width
+	 *   %r14d - row
+	 *   %r15d - col
+	 *   %ebx - input data pointer
+	 *	 %r8d - xfactor
+	 *	 %r9d - yfactor
+	 */
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $40, %rsp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	/* preserve xfactor and yfactor */
+	movl %edx, %r8d
+	movl %ecx, %r9d
+
+	
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r12d	/* load input width */
+
+	movl %r12d, %eax	/* pass input width to argument register */
+	cltd				/* prepare width for idiv */
+	idivl %r8d			/* divide input width by xfactor to get output width */
+	movl %eax, %r13d	/* store output width in register */
+
+	movl %esi, %eax		/* pass index to argument register */
+	cltd				/* prepare index for idiv */
+	idivl %r13d			/* divide index by output width */
+	movl %eax, %r14d	/* quotient is row */
+	movl %edx, %r15d	/* remainder is col */
+
+	imull %r9d, %r14d	/* input row = row * yfactor */
+	imull %r8d, %r15d 	/* input col = col * xfactor */
+
+	imull %r12d, %r14d	/* input row * input width */
+	addl %r15d, %r14d	/* input index = above + input col */
+
+	movq IMAGE_DATA_OFFSET(%rdi), %rbx 	/* load input data pointer */
+
+	movl (%rbx, %r14, 4), %eax 	/* return pixel */
+
+	/* restore values of callee-saved registers */
+	popq %rbx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	/* restore stack */
+	addq $40, %rsp
+	popq %rbp
 	ret
 
 /*
