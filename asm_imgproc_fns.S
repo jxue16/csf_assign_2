@@ -13,12 +13,6 @@
 #define IMAGE_DATA_OFFSET    8
 
 /*
- * TODO: define your helper functions here.
- * Don't forget to use the .globl directive to make
- * them visible to the test code.
- */
-
-/*
  * Definitions of image transformation functions
  */
 

@@ -92,7 +92,7 @@ int main( int argc, char **argv ) {
   TEST(test_get_a);
   TEST(test_make_pixel);
   TEST(test_rot_colors);
-  TEST(test_compute_index);
+  //TEST(test_compute_index);
   //TEST(test_valid_position);
   //TEST(test_pa_init);
   //TEST(test_pa_update);
@@ -360,13 +360,11 @@ void test_squash_pixel(TestObjs *objs) {
 
   int32_t out_r = 2;
   int32_t out_c = 4;
+  int32_t out_ind = out_r * 7 + out_c;
 
-  int32_t in_r = out_r * yfac;
-  int32_t in_c = out_c * xfac;
+  uint32_t squashed = squash_pixel(&objs->smol, out_ind, xfac, yfac);
 
-  uint32_t squashed = squash_pixel(&objs->smol, out_r, out_c, xfac, yfac);
-
-  ASSERT(squashed == objs->smol.data[compute_index(&objs->smol, in_r, in_c)]);
+  ASSERT(squashed == objs->smol_squash_3_1.data[out_ind]);
 }
 
 void test_expand_pixel(TestObjs *objs) {

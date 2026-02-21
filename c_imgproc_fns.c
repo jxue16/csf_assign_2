@@ -53,7 +53,7 @@ void imgproc_squash( struct Image *input_img, struct Image *output_img, int32_t 
   for (int32_t i = 0; i < output_img->height; i++) {
     for (int32_t j = 0; j < output_img->width; j++) {
       int32_t index = compute_index(output_img, i, j);
-      output_img->data[index] = squash_pixel(input_img, i, j, xfac, yfac);
+      output_img->data[index] = squash_pixel(input_img, index, xfac, yfac);
     }
   }
 }
@@ -375,15 +375,17 @@ uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j) {
 // Compute squashed pixel at output position (i, j)
 //
 // @param img pointer to input Image
-// @param i row in output image
-// @param j column in output image
+// @param i linear index of pixel
 // @param xfac xfactor of squash
 // @param yfac yfactor of squash
 // @return squashed pixel value
-uint32_t squash_pixel(struct Image *img, int32_t i, int32_t j, int32_t xfac, int32_t yfac) {
+uint32_t squash_pixel(struct Image *img, int32_t i, int32_t xfac, int32_t yfac) {
   // Retrieve input image baseline
-  int32_t base_r = i * yfac;
-  int32_t base_c = j * xfac;
+  int32_t out_w = img->width / xfac;
+  int32_t r = i / out_w;
+  int32_t c = i % out_w;
+  int32_t base_r = r * yfac;
+  int32_t base_c = c * xfac;
 
   // Compute squashed pixel
   int32_t index = compute_index(img, base_r, base_c);

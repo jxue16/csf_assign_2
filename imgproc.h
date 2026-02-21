@@ -242,11 +242,10 @@ uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j);
 // Compute squashed pixel at output position (i, j)
 //
 // @param img pointer to input Image
-// @param i row in output image
-// @param j column in output image
+// @param i linear index of pixel
 // @param xfac xfactor of squash
 // @param yfac yfactor of squash
 // @return squashed pixel value
-uint32_t squash_pixel(struct Image *img, int32_t i, int32_t j, int32_t xfac, int32_t yfac);
+uint32_t squash_pixel(struct Image *img, int32_t i, int32_t xfac, int32_t yfac);
 
 #endif // IMGPROC_H
