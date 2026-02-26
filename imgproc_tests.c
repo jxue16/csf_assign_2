@@ -98,7 +98,7 @@ int main( int argc, char **argv ) {
   TEST(test_pa_update);
   TEST(test_pa_update_from_img);
   TEST(test_pa_avg_pixel);
-  //TEST(test_blur_pixel);
+  TEST(test_blur_pixel);
   TEST(test_squash_pixel);
   //TEST(test_expand_pixel);
 

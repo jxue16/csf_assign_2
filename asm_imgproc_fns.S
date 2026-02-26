@@ -76,7 +76,7 @@ imgproc_squash:
 	/* set up ABI-compliant stack frame */
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $40, %rsp
+	subq $8, %rsp
 	/* save callee-saved registers */
 	pushq %r12
 	pushq %r13
@@ -128,7 +128,7 @@ imgproc_squash:
 	popq %r13
 	popq %r12
 	/* restore stack */
-	addq $40, %rsp
+	addq $8, %rsp
 	popq %rbp
 	ret
 
@@ -161,7 +161,7 @@ imgproc_color_rot:
 	/* set up ABI-compliant stack frame */
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $40, %rsp
+	subq $8, %rsp
 	/* save current values of callee-saved registers on stack */
 	pushq %r12
 	pushq %r13
@@ -198,7 +198,7 @@ imgproc_color_rot:
 		popq %r13
 		popq %r12
 		/* restore stack */
-		addq $40, %rsp
+		addq $8, %rsp
 		popq %rbp
 		ret
 
@@ -406,7 +406,7 @@ rot_colors:
 	/* set up ABI-compliant stack frame */
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $40, %rsp
+	subq $8, %rsp
 	/* save current values of callee-saved registers on stack */
 	pushq %r12
 	pushq %r13
@@ -446,7 +446,7 @@ rot_colors:
 	popq %r13
 	popq %r12
 	/* restore stack */
-	addq $40, %rsp
+	addq $8, %rsp
 	popq %rbp
 	ret
 
@@ -543,11 +543,9 @@ pa_update:
 	/* set up ABI-compliant stack frame */
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $16, %rsp
 	/* save current values of callee-saved registers on stack */
 	pushq %r12
 	pushq %r13
-	subq $8, %rsp  /* re-align stack pointer */
 
 	movq %rdi, %r12   /* save pointer to PixelAverager */
 	movl %esi, %r13d  /* save pixel value */
@@ -571,11 +569,9 @@ pa_update:
 	incl PA_COUNT_OFFSET(%r12)    /* increment PixelAverager count */
 
 	/* restore values of callee-saved registers */
-	addq $8, %rsp
 	popq %r13
 	popq %r12
 	/* restore stack */
-	addq $16, %rsp
 	popq %rbp
 	ret
 
@@ -602,13 +598,11 @@ pa_update_from_img:
 	/* set up ABI-compliant stack frame */
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $32, %rsp
 	/* save current values of callee-saved registers on stack */
 	pushq %r12
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	subq $8, %rsp  /* re-align stack pointer */
 
 	movq %rdi, %r12   /* save pointer to PixelAverager */
 	movq %rsi, %r13   /* save pointer to Image */
@@ -637,13 +631,11 @@ pa_update_from_img:
 
 	.Ldone_pa_update_from_img:
 		/* restore values of callee-saved registers */
-		addq $8, %rsp
 		popq %r15
 		popq %r14
 		popq %r13
 		popq %r12
 		/* restore stack */
-		addq $32, %rsp
 		popq %rbp
 		ret
 
@@ -692,9 +684,134 @@ pa_avg_pixel:
 	addq $8, %rsp  /* restore stack pointer */
 	ret
 
+/*
+ * Blur the pixel at the given position
+ *
+ * Parameters:
+ *   %rdi - pointer to Image
+ *   %esi - pixel row
+ *   %edx - pixel column
+ *   %ecx - blur distance
+ * 
+ * Returns:
+ *    blurred pixel
+ */
 	.globl blur_pixel
 blur_pixel:
-	/* TODO: implement */
+	/*
+	 * Register use:
+	 *   %r12d - pixel row, blurred R value
+	 *   %r13d - pixel column, blurred G value
+	 *   %r14d - blur distance, blurred B value
+	 *   %r15d - outer loop counter, A value
+	 *   %ebx - inner loop counter, averaged pixel
+	 *
+	 * Memory use:
+     * -20(%rbp) - base address of PixelAverager instance
+     * -72(%rbp) - base address of Image struct
+	 */
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $24, %rsp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	pushq %rdi        /* save pointer to Image on stack */
+	movl %esi, %r12d  /* save pixel row */
+	movl %edx, %r13d  /* save pixel column */
+	movl %ecx, %r14d  /* save blur distance */
+
+	leaq -20(%rbp), %rdi  /* 1st arg = address of PixelAverager */
+	call pa_init          /* initialize PixelAverager */
+
+	movl %r12d, %r15d  /* initially set outer loop counter to # rows */
+	subl %r14d, %r15d  /* subtract blur distance from outer loop counter */
+
+	.Louter_top_blur_pixel:
+		movl %r12d, %r10d
+		addl %r14d, %r10d  /* %r10d now holds value row + blur distance */
+		cmpl %r10d, %r15d  /* compare outer loop counter to row + blur distance */
+		jg .Louter_done_blur_pixel  /* terminate loop if counter > row + blur distance */
+
+		movl %r13d, %ebx  /* initially set inner loop counter to # cols */
+		subl %r14d, %ebx  /* subtract blur distance from inner loop counter */
+
+	.Linner_top_blur_pixel:
+		movl %r13d, %r11d
+		addl %r14d, %r11d  /* %r11d now holds col + blur distance */
+		cmpl %r11d, %ebx   /* compare inner loop counter to col + blur distance */
+		jg .Linner_done_blur_pixel  /* terminate loop if counter > col + blur distance */
+
+		leaq -20(%rbp), %rdi     /* 1st arg = pointer to PixelAverager */
+		movq -72(%rbp), %rsi     /* 2nd arg = pointer to Image */
+		movl %r15d, %edx         /* 3rd arg = pixel row */
+		movl %ebx, %ecx          /* 4th arg = pixel column */
+		call pa_update_from_img  /* update PixelAverager */
+
+		incl %ebx                   /* increment inner loop counter */
+		jmp .Linner_top_blur_pixel  /* start next inner loop */
+
+	.Linner_done_blur_pixel:
+		incl %r15d                  /* increment outer loop counter */
+		jmp .Louter_top_blur_pixel  /* start next outer loop */
+
+	.Louter_done_blur_pixel:
+	/* get linear index of pixel */
+	movq -72(%rbp), %rdi  /* 1st arg = pointer to Image */
+	movl %r12d, %esi      /* 2nd arg = pixel row */
+	movl %r13d, %edx      /* 3rd arg = pixel column */
+	call compute_index    /* after call, index stored in %rax */
+
+	/* get alpha value */
+	movq -72(%rbp), %r10                /* get pointer to Image */
+	movq IMAGE_DATA_OFFSET(%r10), %r11  /* get Image data array */
+	movl (%r11, %rax, 4), %edi          /* 1st arg = element at pixel's index */
+	call get_a
+	movl %eax, %r15d                    /* save alpha value */
+
+	/* get averaged pixel */
+	leaq -20(%rbp), %rdi  /* 1st arg = pointer to PixelAverager */
+	call pa_avg_pixel     /* call function for averaging pixel */
+	movl %eax, %ebx       /* save averaged pixel */
+
+	/* get red value */
+	movl %ebx, %edi   /* 1st arg = averaged pixel */
+	call get_r
+	movl %eax, %r12d  /* save red value */
+
+	/* get green value */
+	movl %ebx, %edi   /* 1st arg = averaged pixel */
+	call get_g
+	movl %eax, %r13d  /* save green value */
+
+	/* get blue value */
+	movl %ebx, %edi   /* 1st arg = averaged pixel */
+	call get_b
+	movl %eax, %r14d  /* save blue value */
+
+	/* make pixel with blurred values */
+	movl %r12d, %edi  /* 1st arg = red value */
+	movl %r13d, %esi  /* 2nd arg = green value */
+	movl %r14d, %edx  /* 3rd arg = blue value */
+	movl %r15d, %ecx  /* 4th arg = alpha value */
+	call make_pixel
+
+	/* restore values of callee-saved registers */
+	popq %rdi
+	popq %rbx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	/* restore stack */
+	addq $24, %rsp
+	popq %rbp
 	ret
 
 	.globl expand_pixel
@@ -718,7 +835,7 @@ squash_pixel:
 	/* set up ABI-compliant stack frame */
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $40, %rsp
+	subq $8, %rsp
 	/* save current values of callee-saved registers on stack */
 	pushq %r12
 	pushq %r13
@@ -761,7 +878,7 @@ squash_pixel:
 	popq %r13
 	popq %r12
 	/* restore stack */
-	addq $40, %rsp
+	addq $8, %rsp
 	popq %rbp
 	ret
 
