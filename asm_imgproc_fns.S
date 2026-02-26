@@ -12,6 +12,13 @@
 #define IMAGE_HEIGHT_OFFSET  4
 #define IMAGE_DATA_OFFSET    8
 
+/* Offsets for PixelAverager struct */
+#define PA_R_OFFSET 0
+#define PA_G_OFFSET 4
+#define PA_B_OFFSET 8
+#define PA_A_OFFSET 12
+#define PA_COUNT_OFFSET 16
+
 /*
  * Definitions of image transformation functions
  */
@@ -443,34 +450,246 @@ rot_colors:
 	popq %rbp
 	ret
 
+/*
+ * Gets the row-major linear index for a pixel at position (row, col)
+ *
+ * Parameters:
+ *   %rdi - pointer to Image struct
+ *	 %esi - pixel row
+ *	 %edx - pixel column
+ *
+ * Returns:
+ *    linear index of target pixel
+ */
 	.globl compute_index
 compute_index:
-	/* TODO: implement */
+	subq $8, %rsp		                 /* align stack pointer */
+	movl IMAGE_WIDTH_OFFSET(%rdi), %eax  /* get width of image */
+	imull %esi, %eax                     /* multiply row * image width */
+	addl %edx, %eax                      /* add column to get linear index */
+	addq $8, %rsp                        /* restore stack pointer */
 	ret
 
+/*
+ * Determines if the position (row, col) is valid for the given Image
+ *
+ * Parameters:
+ *   %rdi - pointer to Image struct
+ *	 %esi - pixel row
+ *	 %edx - pixel column
+ *
+ * Returns:
+ *    1 if position valid, 0 otherwise
+ */
 	.globl valid_position
 valid_position:
-	/* TODO: implement */
-	ret
+	subq $8, %rsp                          /* align stack pointer */
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r10d   /* get image width */
+	movl IMAGE_HEIGHT_OFFSET(%rdi), %r11d  /* get image height */
+	
+	/* if any of these comparions are true, position is invalid */
+	cmpl $0, %esi
+	jl .Lvalid_position_false   /* row < 0 */
+	cmpl %r11d, %esi
+	jge .Lvalid_position_false  /* row >= image height */
+	cmpl $0, %edx
+	jl .Lvalid_position_false   /* column < 0 */
+	cmpl %r10d, %edx
+	jge .Lvalid_position_false  /* column >= image width */
 
+	/* if we reach this point, position is valid */
+	movl $1, %eax
+	addq $8, %rsp
+	ret
+	
+	.Lvalid_position_false:   /* position invalid */
+		movl $0, %eax
+		addq $8, %rsp
+		ret
+
+/*
+ * Initialize a PixelAverager instance. All fields initially set to 0
+ *
+ * Parameters:
+ *   %rdi - pointer to PixelAverager
+ */
 	.globl pa_init
 pa_init:
-	/* TODO: implement */
+	subq $8, %rsp
+	/* set all fields of PixelAverager to 0 */
+	movl $0, PA_R_OFFSET(%rdi)
+	movl $0, PA_G_OFFSET(%rdi)
+	movl $0, PA_B_OFFSET(%rdi)
+	movl $0, PA_A_OFFSET(%rdi)
+	movl $0, PA_COUNT_OFFSET(%rdi)
+	addq $8, %rsp
 	ret
 
+/*
+ * Update PixelAverager values with values in given pixel
+ *
+ * Parameters:
+ *   %rdi - pointer to PixelAverager
+ *   %esi - pixel value to update with
+ */
 	.globl pa_update
 pa_update:
-	/* TODO: implement */
+	/*
+	 * Register use:
+	 *   %r12  - pointer to PixelAverager
+	 *   %r13d - pixel value
+	 */
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $16, %rsp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	subq $8, %rsp  /* re-align stack pointer */
+
+	movq %rdi, %r12   /* save pointer to PixelAverager */
+	movl %esi, %r13d  /* save pixel value */
+
+	movl %r13d, %edi
+	call get_r
+	addl %eax, PA_R_OFFSET(%r12)  /* add R value of pixel to PixelAverager */
+
+	movl %r13d, %edi
+	call get_g
+	addl %eax, PA_G_OFFSET(%r12)  /* add G value of pixel to PixelAverager */
+
+	movl %r13d, %edi
+	call get_b
+	addl %eax, PA_B_OFFSET(%r12)  /* add B value of pixel to PixelAverager */
+
+	movl %r13d, %edi
+	call get_a
+	addl %eax, PA_A_OFFSET(%r12)  /* add A value of pixel to PixelAverager */
+
+	incl PA_COUNT_OFFSET(%r12)    /* increment PixelAverager count */
+
+	/* restore values of callee-saved registers */
+	addq $8, %rsp
+	popq %r13
+	popq %r12
+	/* restore stack */
+	addq $16, %rsp
+	popq %rbp
 	ret
 
+/*
+ * Update PixelAverager with pixel at position (row, col) in given Image
+ * Do not update if position is out of bounds
+ *
+ * Parameters:
+ *   %rdi - pointer to PixelAverager
+ *   %rsi - pointer to Image
+ *   %edx - pixel row
+ *   %ecx - pixel column
+ */
 	.globl pa_update_from_img
 pa_update_from_img:
-	/* TODO: implement */
-	ret
+	/*
+	 * Register use:
+	 *   %r12  - pointer to PixelAverager
+	 *   %r13  - pointer to Image
+	 *   %r14d - pixel row
+	 *   %r15d - pixel column
+	 */
 
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $32, %rsp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	subq $8, %rsp  /* re-align stack pointer */
+
+	movq %rdi, %r12   /* save pointer to PixelAverager */
+	movq %rsi, %r13   /* save pointer to Image */
+	movl %edx, %r14d  /* save pixel row */
+	movl %ecx, %r15d  /* save pixel column */
+
+	/* check that pixel has valid position */
+	movq %r13, %rdi               /* first argument = pointer to Image */
+	movl %r14d, %esi              /* second argument = pixel row */
+	movl %r15d, %edx              /* third argument = pixel column */
+	call valid_position
+	cmpl $0, %eax
+	je .Ldone_pa_update_from_img  /* if function call returned 0, invalid */
+
+	/* get index of pixel we want to update with */
+	movq %r13, %rdi     /* first argument = pointer to Image */
+	movl %r14d, %esi    /* second argument = pixel row */
+	movl %r15d, %edx    /* third argument = pixel column */
+	call compute_index  /* %rax now holds pixel index */
+
+	/* update PixelAverager with this pixel */
+	movq %r12, %rdi                     /* first argument = pointer to PixelAverager */
+	movq IMAGE_DATA_OFFSET(%r13), %r10  /* get Image data array */
+	movl (%r10, %rax, 4), %esi          /* second argument = element at pixel index */
+	call pa_update
+
+	.Ldone_pa_update_from_img:
+		/* restore values of callee-saved registers */
+		addq $8, %rsp
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		/* restore stack */
+		addq $32, %rsp
+		popq %rbp
+		ret
+
+/*
+ * Return a pixel that is the average of all pixels used to update PixelAverager
+ *
+ * Parameters:
+ *   %rdi - pointer to PixelAverager
+ *
+ * Returns:
+ *    pixel whose red, green, blue, and alpha values are the average of
+ *    all the pixels used to update PixelAverager
+ */
 	.globl pa_avg_pixel
 pa_avg_pixel:
-	/* TODO: implement */
+	subq $8, %rsp  /* align stack pointer */
+
+	movl PA_COUNT_OFFSET(%rdi), %ecx  /* get pixel count */
+
+	movl $0, %edx
+	movl PA_R_OFFSET(%rdi), %eax  /* dividend = total R value */
+	divl %ecx                     /* compute (R value)/(pixel count) */
+	movl %eax, %r8d               /* store quotient */
+
+	movl $0, %edx
+	movl PA_G_OFFSET(%rdi), %eax  /* dividend = total G value */
+	divl %ecx                     /* compute (G value)/(pixel count) */
+	movl %eax, %r9d               /* store quotient */
+
+	movl $0, %edx
+	movl PA_B_OFFSET(%rdi), %eax  /* dividend = total B value */
+	divl %ecx                     /* compute (B value)/(pixel count) */
+	movl %eax, %r10d              /* store quotient */
+
+	movl $0, %edx
+	movl PA_A_OFFSET(%rdi), %eax  /* dividend = total A value */
+	divl %ecx                     /* compute (A value)/(pixel count) */
+	movl %eax, %r11d              /* store quotient */
+
+	movl %r8d, %edi   /* first argument = avg R value */
+	movl %r9d, %esi   /* second argument = avg G value */
+	movl %r10d, %edx  /* third argument = avg B value */ 
+	movl %r11d, %ecx  /* fourth argument = avg A value */
+	call make_pixel   /* make pixel with average values */
+
+	addq $8, %rsp  /* restore stack pointer */
 	ret
 
 	.globl blur_pixel
