@@ -9,6 +9,9 @@ Milestone 2
 Implemented functions for isolating RGBA values from pixel, make_pixel,
 rot_colors, and imgproc_color_rot
 
+Milestone 3
+Implemented blur_pixel and imgproc_blur
+
 Partner 2: Jonathan Xue (jxue18@jh.edu)
 Milestone 1
 Implemented imgproc_squash, imgproc_expand, expand_pixel, and squash_pixel. Also
@@ -17,3 +20,6 @@ initial shared repository.
 
 Milestone 2
 Implemented squash_pixel and imgproc_squash
+
+Milestone 3
+Implemented expand_pixel and imgproc_expand

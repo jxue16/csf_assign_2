@@ -85,7 +85,7 @@ int main( int argc, char **argv ) {
   TEST( test_squash_basic );
   TEST( test_color_rot_basic );
   TEST( test_blur_basic );
-  //TEST( test_expand_basic );
+  TEST( test_expand_basic );
   TEST(test_get_r);
   TEST(test_get_g);
   TEST(test_get_b);
@@ -100,7 +100,7 @@ int main( int argc, char **argv ) {
   TEST(test_pa_avg_pixel);
   TEST(test_blur_pixel);
   TEST(test_squash_pixel);
-  //TEST(test_expand_pixel);
+  TEST(test_expand_pixel);
 
   TEST_FINI();
 }
