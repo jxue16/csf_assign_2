@@ -351,8 +351,60 @@ imgproc_blur:
  */
 	.globl imgproc_expand
 imgproc_expand:
-	/* TODO: implement */
-	ret
+	/*
+	* Register use:
+	*   %r12d - total output pixels
+	*   %r13d - index counter
+	*   %r14  - input image pointer
+	*   %r15  - output image pointer
+	*   %rbx  - pointer to output data array
+	*/
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
+	/* save callee-saved registers */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	movq %rdi, %r14        /* save input image in r14 */
+	movq %rsi, %r15        /* save output image in r15 */
+
+	movl IMAGE_WIDTH_OFFSET(%r14), %eax   /* input width */
+	shll $1, %eax                         /* output width = input width * 2 */
+	movl IMAGE_HEIGHT_OFFSET(%r14), %edx  /* input height */
+	shll $1, %edx                         /* output height = input height * 2 */
+	imull %edx, %eax                      /* total output pixels = output width * output height */
+	movl %eax, %r12d                      /* save total output pixels in r12d */
+
+	.Ltop_expand:
+		cmpl %r12d, %r13d
+		jge .Ldone_expand        /* end loop if index >= no. of pixels */
+
+		movq %r14, %rdi          /* set 1st argument register as pointer to input */
+		movl %r13d, %esi         /* set 2nd argument register as current index */
+		call expand_pixel        /* compute expanded pixel from input */
+
+		movl %eax, (%rbx, %r13, 4)  /* save current pixel */
+
+		incl %r13d               /* increment index */
+		jmp .Ltop_expand         /* return to top of loop */
+
+	.Ldone_expand:
+		/* restore values of callee-saved registers */
+		popq %rbx
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		/* restore stack */
+		addq $8, %rsp
+		popq %rbp
+		ret
 
 /*
  * Gets the 8 bits corresponding to the red component value
@@ -888,7 +940,183 @@ blur_pixel:
 
 	.globl expand_pixel
 expand_pixel:
-	/* TODO: implement */
+	/*
+	 * Register use:
+	 *   %r12d - input width
+	 *   %r13d - output width
+	 *   %r14d - row
+	 *   %r15d - col
+	 *   %ebx - input data pointer
+	 * Memory use:
+	 *	-8(%rbp)  - pointer to input image
+	 */
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $8, %rsp
+	/* save callee-saved registers */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	movq %rdi, -8(%rbp)		/* save input image pointer on stack */
+
+	movl IMAGE_WIDTH_OFFSET(%rdi), %r15d	/* input width */
+	movl IMAGE_HEIGHT_OFFSET(%rdi), %ebx	/* input height */
+
+	movl %r15d, %r14d		/* output width = input width * 2 */
+	shll $1, %r14d
+
+	movl %esi, %eax			/* set dividend to output index */
+	cltd					/* prepare width for idiv */
+	idivl %r14d				/* divide index by output width */
+	movl %eax, %r12d		/* quotient = output row (i) */
+	movl %edx, %r13d		/* remainder = output col (j) */
+
+	/* begin 4 cases using parity of i and j */
+	movl %r12d, %eax
+	andl $1, %eax				/* eax = (i is odd) */
+	movl %r13d, %ecx
+	andl $1, %ecx				/* ecx = (j is odd) */
+
+	cmpl $0, %eax
+	jne .Li_odd_expand_pixel	/* i is odd */
+
+	/* if get here, i is even */
+	cmpl $0, %ecx
+	jne .Li_even_j_odd_expand_pixel	/* i is even, j is odd */
+
+	/* case 1: i is even, j is even */
+	movl %r12d, %esi		/* input row = i/2 */
+	sarl $1, %esi
+	movl %r13d, %edx		/* input col = j/2 */
+	sarl $1, %edx
+	movq -8(%rbp), %rdi		/* pointer to input image */
+	call compute_index		/* get linear index */
+	movq -8(%rbp), %r10
+	movq IMAGE_DATA_OFFSET(%r10), %r11
+	movl (%r11, %rax, 4), %eax	/* return pixel at (i/2, j/2) */
+	jmp .Ldone_expand_pixel
+
+.Li_even_j_odd_expand_pixel:
+	/* case 2: i is even, j is odd */
+	subq $24, %rsp					/* allocate bytes for PixelAverager */
+	leaq (%rsp), %rdi				/* pointer to PixelAverager */
+	call pa_init
+
+	movl %r12d, %r8d
+	sarl $1, %r8d					/* input row = i/2 */
+	movl %r13d, %r9d
+	sarl $1, %r9d					/* input col = floor(j/2) */
+
+	leaq (%rsp), %rdi				/* 1st arg = pointer to PixelAverager */
+	movq -8(%rbp), %rsi				/* 2nd arg = pointer to image */
+	movl %r8d, %edx					/* 3rd arg = row */
+	movl %r9d, %ecx					/* 4th arg = col */
+	call pa_update_from_img
+
+	leaq (%rsp), %rdi				/* same call as above but with 4th arg as col + 1 */
+	movq -8(%rbp), %rsi
+	movl %r8d, %edx
+	leal 1(%r9d), %ecx				/* 4th arg = col + 1 */
+	call pa_update_from_img
+
+	leaq (%rsp), %rdi
+	call pa_avg_pixel				/* average pixel values */
+
+	addq $24, %rsp
+	jmp .Ldone_expand_pixel
+
+.Li_odd_expand_pixel:
+	/* i is odd */
+	cmpl $0, %ecx
+	jne .Li_odd_j_odd_expand_pixel	/* i is odd, j is odd */
+
+	/* case 3: i is odd, j is even */
+	subq $24, %rsp			/* allocate bytes for PixelAverager */
+	leaq (%rsp), %rdi
+	call pa_init
+
+	movl %r12d, %r8d
+	sarl $1, %r8d			/* input row = floor(i/2) */
+	movl %r13d, %r9d
+	sarl $1, %r9d			/* input col = j/2 */
+
+	leaq (%rsp), %rdi		/* 1st arg = pointer to PixelAverager */
+	movq -8(%rbp), %rsi		/* 2nd arg = pointer to image */
+	movl %r8d, %edx			/* 3rd arg = row */
+	movl %r9d, %ecx			/* 4th arg = col */
+	call pa_update_from_img
+
+	leaq (%rsp), %rdi		/* same call as above but with 3rd arg as row + 1 */
+	movq -8(%rbp), %rsi
+	leal 1(%r8d), %edx		/* 3rd arg = row + 1 */
+	movl %r9d, %ecx
+	call pa_update_from_img
+
+	leaq (%rsp), %rdi
+	call pa_avg_pixel	/* average pixel values */
+
+	addq $24, %rsp
+	jmp .Ldone_expand_pixel
+
+.Li_odd_j_odd_expand_pixel:
+	/* case 4: i is odd, j is odd */
+	subq $24, %rsp			/* allocate bytes for PixelAverager */
+	leaq (%rsp), %rdi
+	call pa_init
+
+	movl %r12d, %r8d
+	sarl $1, %r8d			/* r8d = floor(i/2) */
+	movl %r13d, %r9d
+	sarl $1, %r9d			/* r9d = floor(j/2) */
+
+	/* (floor(i/2), floor(j/2)) */
+	leaq (%rsp), %rdi		/* 1st arg = pointer to PixelAverager */
+	movq -8(%rbp), %rsi		/* 2nd arg = pointer to image */
+	movl %r8d, %edx			/* 3rd arg = row */
+	movl %r9d, %ecx			/* 4th arg = col */
+	call pa_update_from_img
+
+	/* (floor(i/2), floor(j/2)+1) */
+	leaq (%rsp), %rdi		/* same call as above but with 4th arg as col + 1 */
+	movq -8(%rbp), %rsi
+	movl %r8d, %edx
+	leal 1(%r9d), %ecx		/* 4th arg = col + 1 */
+	call pa_update_from_img
+
+	/* (floor(i/2)+1, floor(j/2)) */
+	leaq (%rsp), %rdi		/* same call as first but with 3rd arg as row + 1 */
+	movq -8(%rbp), %rsi
+	leal 1(%r8d), %edx		/* 3rd arg = row + 1 */
+	movl %r9d, %ecx
+	call pa_update_from_img
+
+	/* (floor(i/2)+1, floor(j/2)+1) */
+	leaq (%rsp), %rdi		/* same call as first but with 3rd arg as row + 1, 4th arg as col + 1 */
+	movq -8(%rbp), %rsi
+	leal 1(%r8d), %edx		/* 3rd arg = row + 1 */
+	leal 1(%r9d), %ecx		/* 4th arg = col + 1 */
+	call pa_update_from_img
+
+	leaq (%rsp), %rdi
+	call pa_avg_pixel	/* average pixel values */
+
+	addq $24, %rsp
+
+.Ldone_expand_pixel:
+	/* restore values of callee-saved registers */
+	popq %rbx
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	/* restore stack */
+	addq $8, %rsp
+	popq %rbp
 	ret
 
 	.globl squash_pixel
