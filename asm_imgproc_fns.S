@@ -233,8 +233,80 @@ imgproc_color_rot:
  */
 	.globl imgproc_blur
 imgproc_blur:
-	/* TODO: implement */
-	ret
+	/*
+	 * Register use:
+	 *   %r12 - pointer to input Image
+	 *   %r13d - index of current pixel
+	 *   %r14d - blur distance
+	 *   %r15d - outer loop counter
+	 *   %ebx - inner loop counter
+	 *
+	 * Memory use:
+	 *   -48(%rbp) - base of output Image address
+	 */
+
+	/* set up ABI-compliant stack frame */
+	pushq %rbp
+	movq %rsp, %rbp
+	/* save current values of callee-saved registers on stack */
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	pushq %rbx
+
+	movq %rdi, %r12   /* save pointer to input Image */
+	pushq %rsi        /* save pointer to output Image on stack */
+	movl %edx, %r14d  /* save blur distance */
+
+	movl $0, %r15d  /* initially set outer loop counter to 0 */
+
+	.Louter_top_imgproc_blur:
+		movl IMAGE_HEIGHT_OFFSET(%r12), %r10d  /* get height of Image */
+		cmpl %r10d, %r15d  /* compare outer loop counter to height */
+		jge .Louter_done_imgproc_blur  /* terminate loop if counter >= height */
+
+		movl $0, %ebx  /* initially set inner loop counter to 0 */
+
+	.Linner_top_imgproc_blur:
+		movl IMAGE_WIDTH_OFFSET(%r12), %r11d  /* get width of Image */
+		cmpl %r11d, %ebx  /* compare inner loop counter to width */
+		jge .Linner_done_imgproc_blur  /* terminate loop if counter >= width */
+
+		movq %r12, %rdi     /* 1st arg = pointer to input Image */
+		movl %r15d, %esi    /* 2nd arg = pixel row */
+		movl %ebx, %edx     /* 3rd arg = pixel column */
+		call compute_index  /* get linear index of this pixel */
+		movl %eax, %r13d    /* store index */
+
+		movq %r12, %rdi     /* 1st arg = pointer to input Image */
+		movl %r15d, %esi    /* 2nd arg = pixel row */
+		movl %ebx, %edx     /* 3rd arg = pixel column */
+		movl %r14d, %ecx    /* 4th arg = blur distance */
+		call blur_pixel     /* get blurred pixel, store in %eax */
+
+		movq -48(%rbp), %r8               /* get pointer to output Image */
+		movq IMAGE_DATA_OFFSET(%r8), %r9  /* get data array of output Image */
+		movl %eax, (%r9, %r13, 4)         /* store blurred pixel in output Image */
+
+		incl %ebx                     /* increment inner loop counter */
+		jmp .Linner_top_imgproc_blur  /* start next inner loop */
+
+	.Linner_done_imgproc_blur:
+		incl %r15d                    /* increment outer loop counter */
+		jmp .Louter_top_imgproc_blur  /* start next outer loop */
+
+	.Louter_done_imgproc_blur:
+		/* restore values of callee-saved registers */
+		popq %rsi
+		popq %rbx
+		popq %r15
+		popq %r14
+		popq %r13
+		popq %r12
+		/* restore stack */
+		popq %rbp
+		ret
 
 /*
  *  The `expand` transformation doubles the width and height of the image.

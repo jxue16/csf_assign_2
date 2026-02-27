@@ -84,7 +84,7 @@ int main( int argc, char **argv ) {
   // for any additional test functions you add.
   TEST( test_squash_basic );
   TEST( test_color_rot_basic );
-  //TEST( test_blur_basic );
+  TEST( test_blur_basic );
   //TEST( test_expand_basic );
   TEST(test_get_r);
   TEST(test_get_g);
