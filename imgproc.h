@@ -234,10 +234,9 @@ uint32_t blur_pixel(struct Image *img, int32_t row, int32_t col, int32_t blur_di
 // Compute expanded pixel at output position (i, j)
 //
 // @param img pointer to input Image
-// @param i row in output image
-// @param j column in output image
+// @param i linear index in output Image
 // @return expanded pixel value
-uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j);
+uint32_t expand_pixel(struct Image *img, int32_t index);
 
 // Compute squashed pixel at output position (i, j)
 //

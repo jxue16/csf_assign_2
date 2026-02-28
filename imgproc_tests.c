@@ -368,21 +368,47 @@ void test_squash_pixel(TestObjs *objs) {
 }
 
 void test_expand_pixel(TestObjs *objs) {
-  int32_t i = 3;
-  int32_t j = 5;
+  // Odd i, odd j
+  {
+    int32_t i = 3;
+    int32_t j = 5;
 
-  int32_t base_r = i / 2;
-  int32_t base_c = j / 2;
+    int32_t out_index = i * (objs->smol).width * 2 + j;
+    uint32_t expanded = expand_pixel(&objs->smol, out_index);
 
-  struct PixelAverager pa;
-  pa_init(&pa);
+    ASSERT(expanded == objs->smol_expand.data[out_index]);
+  }
 
-  pa_update_from_img(&pa, &objs->smol, base_r, base_c);
-  pa_update_from_img(&pa, &objs->smol, base_r, base_c + 1);
-  pa_update_from_img(&pa, &objs->smol, base_r + 1, base_c);
-  pa_update_from_img(&pa, &objs->smol, base_r + 1, base_c + 1);
+  // Odd i, even j
+  {
+    int32_t i = 21;
+    int32_t j = 20;
 
-  uint32_t expanded = expand_pixel(&objs->smol, i, j);
+    int32_t out_index = i * (objs->smol).width * 2 + j;
+    uint32_t expanded = expand_pixel(&objs->smol, out_index);
 
-  ASSERT(expanded == pa_avg_pixel(&pa));
+    ASSERT(expanded == objs->smol_expand.data[out_index]);
+  }
+
+  // Even i, odd j
+  {
+    int32_t i = 4;
+    int32_t j = 29;
+
+    int32_t out_index = i * (objs->smol).width * 2 + j;
+    uint32_t expanded = expand_pixel(&objs->smol, out_index);
+
+    ASSERT(expanded == objs->smol_expand.data[out_index]);
+  }
+
+  // Even i, even j
+  {
+    int32_t i = 16;
+    int32_t j = 0;
+
+    int32_t out_index = i * (objs->smol).width * 2 + j;
+    uint32_t expanded = expand_pixel(&objs->smol, out_index);
+
+    ASSERT(expanded == objs->smol_expand.data[out_index]);
+  }
 }

@@ -163,7 +163,7 @@ void imgproc_expand( struct Image *input_img, struct Image *output_img) {
   for (int32_t i = 0; i < output_img->height; i++) {
     for (int32_t j = 0; j < output_img->width; j++) {
       int32_t index = compute_index(output_img, i, j);
-      output_img->data[index] = expand_pixel(input_img, i, j);
+      output_img->data[index] = expand_pixel(input_img, index);
     }
   }
 }
@@ -333,11 +333,13 @@ uint32_t blur_pixel(struct Image *img, int32_t row, int32_t col, int32_t blur_di
 // Compute expanded pixel at output position (i, j)
 //
 // @param img pointer to input Image
-// @param i row in output image
-// @param j column in output image
+// @param index linear index in output Image
 // @return expanded pixel value
-uint32_t expand_pixel(struct Image *img, int32_t i, int32_t j) {
+uint32_t expand_pixel(struct Image *img, int32_t index) {
   // Retrieve input image baseline
+  int32_t out_w = img->width * 2;
+  int32_t i = index / out_w;
+  int32_t j = index % out_w;
   int32_t base_r = i / 2;
   int32_t base_c = j / 2;
 

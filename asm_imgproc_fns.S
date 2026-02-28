@@ -381,6 +381,9 @@ imgproc_expand:
 	imull %edx, %eax                      /* total output pixels = output width * output height */
 	movl %eax, %r12d                      /* save total output pixels in r12d */
 
+	movq IMAGE_DATA_OFFSET(%r15), %rbx    /* save pointer to output data array */
+	movl $0, %r13d                        /* initialize loop counter to 0 */
+
 	.Ltop_expand:
 		cmpl %r12d, %r13d
 		jge .Ldone_expand        /* end loop if index >= no. of pixels */
@@ -1003,7 +1006,7 @@ expand_pixel:
 
 .Li_even_j_odd_expand_pixel:
 	/* case 2: i is even, j is odd */
-	subq $24, %rsp					/* allocate bytes for PixelAverager */
+	subq $32, %rsp					/* allocate bytes for PixelAverager */
 	leaq (%rsp), %rdi				/* pointer to PixelAverager */
 	call pa_init
 
@@ -1027,7 +1030,7 @@ expand_pixel:
 	leaq (%rsp), %rdi
 	call pa_avg_pixel				/* average pixel values */
 
-	addq $24, %rsp
+	addq $32, %rsp
 	jmp .Ldone_expand_pixel
 
 .Li_odd_expand_pixel:
@@ -1036,7 +1039,7 @@ expand_pixel:
 	jne .Li_odd_j_odd_expand_pixel	/* i is odd, j is odd */
 
 	/* case 3: i is odd, j is even */
-	subq $24, %rsp			/* allocate bytes for PixelAverager */
+	subq $32, %rsp			/* allocate bytes for PixelAverager */
 	leaq (%rsp), %rdi
 	call pa_init
 
@@ -1060,12 +1063,12 @@ expand_pixel:
 	leaq (%rsp), %rdi
 	call pa_avg_pixel	/* average pixel values */
 
-	addq $24, %rsp
+	addq $32, %rsp
 	jmp .Ldone_expand_pixel
 
 .Li_odd_j_odd_expand_pixel:
 	/* case 4: i is odd, j is odd */
-	subq $24, %rsp			/* allocate bytes for PixelAverager */
+	subq $32, %rsp			/* allocate bytes for PixelAverager */
 	leaq (%rsp), %rdi
 	call pa_init
 
@@ -1105,7 +1108,7 @@ expand_pixel:
 	leaq (%rsp), %rdi
 	call pa_avg_pixel	/* average pixel values */
 
-	addq $24, %rsp
+	addq $32, %rsp
 
 .Ldone_expand_pixel:
 	/* restore values of callee-saved registers */
